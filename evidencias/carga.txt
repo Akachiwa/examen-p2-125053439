@@ -1,0 +1,2 @@
+Leidos 240 registros de /data/output/resultado/part-00000
+Registros en la tabla: 240
