@@ -1,0 +1,3 @@
+hadoop
+hduser
+SSH sin contrasena OK

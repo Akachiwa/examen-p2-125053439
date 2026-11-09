@@ -1,0 +1,3 @@
+hadoop
+hduser
+Hadoop 3.3.6

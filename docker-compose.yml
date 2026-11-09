@@ -1,0 +1,63 @@
+# Pipeline DataMart: hadoop (MapReduce) -> db (PostgreSQL) -> api (Flask)
+# Levantar todo:   docker compose up --build
+# Las variables ${...} se leen del archivo .env
+
+services:
+
+  hadoop:
+    build: ./hadoop                      # usa hadoop/Dockerfile
+    container_name: hadoop
+    hostname: hadoop
+    environment:
+      MATRICULA: ${MATRICULA}
+    volumes:
+      - ./data:/data/input:ro            # el CSV, SOLO LECTURA
+      - ./mapreduce:/opt/mapreduce       # mapper/reducer (sin rebuild)
+      - resultados:/data/output          # salida del job
+      - ssh_keys:/ssh-keys               # llaves SSH compartidas
+    networks:
+      - datamart_net
+
+  db:
+    image: postgres:16
+    container_name: db
+    env_file: .env
+    volumes:
+      - pgdata:/var/lib/postgresql/data  # VOLUMEN NOMBRADO = persistencia
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - datamart_net
+
+  api:
+    build: ./api
+    container_name: api
+    env_file: .env
+    environment:
+      DB_HOST: db                        # conexion POR NOMBRE DE SERVICIO
+      DB_PORT: 5432
+    ports:
+      - "${API_PORT}:5000"               # puerto_PC : puerto_contenedor
+    volumes:
+      - ./scripts:/app/scripts:ro
+      - resultados:/data/output:ro
+      - ssh_keys:/ssh-keys:ro
+    depends_on:
+      db:
+        condition: service_healthy       # espera a que Postgres este listo
+      hadoop:
+        condition: service_started
+    networks:
+      - datamart_net
+
+networks:
+  datamart_net:
+    driver: bridge
+
+volumes:
+  pgdata:
+  resultados:
+  ssh_keys:

@@ -1,0 +1,11 @@
+# Dataset (400 MB) - NO se sube al repositorio
+*.csv
+data/
+
+# Variables con contraseñas
+.env
+
+# Python
+__pycache__/
+*.pyc
+
